@@ -4,7 +4,8 @@ import {
     Box,
     Button,
     Container,
-    FormControlLabel, FormHelperText,
+    OutlinedInput , FormHelperText,
+    InputLabel, FormControl,
     Grid,
     Link, MenuItem,
     Select,
@@ -13,6 +14,7 @@ import {
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import axios from "axios";
+import {useNavigate} from 'react-router-dom';
 
 import {getRoles} from './actions';
 
@@ -29,7 +31,8 @@ function Copyright(props) {
     );
 }
 
-const Register = () => {
+
+const Register = (props) => {
     const [first_name, setFirstName] =useState('')
     const [last_name, setLastName] = useState('')
     const [email, setEmail] = useState('');
@@ -40,17 +43,17 @@ const Register = () => {
     const [redirect, setRedirect] = useState(false);
     const [loading,setLoading] = useState(false);
 
-    useEffect(() =>{
-        // fetch post
-        const fetchData = async () =>{
-            setLoading(true);
-            let response = await getRoles();
-            if(response) {
+    let navigator = useNavigate();
+
+    useEffect(() => {
+        (
+            async () => {
+                const response = await axios.get('roles');
+
                 setRoles(response.data.data);
-                setLoading(false)
             }
-        }
-        fetchData()},[])
+        )()
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -66,10 +69,16 @@ const Register = () => {
         // setIsLoading(true);
         setRedirect(true);
         // setIsLoading(false)
-    }
+    };
+
     const handleChange = (event) => {
         setRoleID(parseInt(event.target.value));
     };
+
+    if (redirect) {
+        navigator('/login');
+    }
+
     return (
         <Container component="main" maxWidth="xs">
             <Box
@@ -123,23 +132,28 @@ const Register = () => {
                             />
                         </Grid>
                         <Grid item xs={12} >
-                            <Select
-                                fullWidth
-                                onChange={handleChange}
-                            >
-                                <MenuItem disabled value="">
-                                    <em>Isotope type</em>
-                                </MenuItem>
-                                {roles.map((role) => (
-                                    <MenuItem
-                                        key={role.id}
-                                        value={role.id}
+                            <FormControl sx={{ m: 1, width: 300 }}>
+                                <InputLabel id="demo-multiple-name-label">Isotope Type</InputLabel>
+                                    <Select
+                                        fullWidth
+                                        multiple
+                                        onChange={handleChange}
+                                        input={<OutlinedInput label="Name" />}
                                     >
-                                        {role.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                            <FormHelperText>Select Isotope Type</FormHelperText>
+                                        <MenuItem disabled value="">
+                                            <em>Isotope type</em>
+                                        </MenuItem>
+                                        {roles.map((role) => (
+                                            <MenuItem
+                                                key={role.id}
+                                                value={role.id}
+                                            >
+                                                {role.name}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                    <FormHelperText>Select Isotope Type</FormHelperText>
+                            </FormControl>
                         </Grid>
                         <Grid item xs={12}>
                             <TextField
