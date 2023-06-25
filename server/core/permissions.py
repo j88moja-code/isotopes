@@ -1,6 +1,6 @@
 from rest_framework import permissions
 
-from .serializers import UserSerializer
+from accounts.serializers import UserSerializer
 
 
 class ViewPermissions(permissions.BasePermission):
@@ -18,7 +18,7 @@ class ViewPermissions(permissions.BasePermission):
 
 
 
-class IsAuthorOrReadOnly(permissions.BasePermission):
+class IsOwnerOrReadOnly(permissions.BasePermission):
     def has_object_permission(self,request,view,obj):
         if request.method in permissions.SAFE_METHODS:
             return True

@@ -2,24 +2,25 @@ from django.db.models import Q
 from django.contrib.auth import get_user_model
 from rest_framework.parsers import FileUploadParser,MultiPartParser,FormParser
 from rest_framework import generics, mixins, response, status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, action
 from rest_framework.permissions import IsAuthenticated
+from django.http import HttpResponse
 
-from .models import Event, Comment
-from .serializers import EventSerializer, CommentSerializer, EventDetailSerializer
+from .serializers import *
+from .models import Track, TrackComment
 from core.permissions import ViewPermissions, IsOwnerOrReadOnly
 from core.pagination import CustomPagination
 from accounts.serializers import UserSerializer
 from accounts.authentication import JWTAuthentication
 
-# events views
+# # tracks views
 
-class EventListAPI(generics.ListCreateAPIView):
+class TrackListAPI(generics.ListCreateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    serializer_class = EventSerializer
+    serializer_class = TrackSerializer
     pagination_class = CustomPagination
-    parser_classes = (MultiPartParser,FormParser)
+    parser_classes = (FileUploadParser, MultiPartParser, FormParser)
 
     def get_queryset(self):
         user = self.request.user
@@ -27,26 +28,37 @@ class EventListAPI(generics.ListCreateAPIView):
         following_users = [following.id for following in user.followers.all()]
         # check if following is 1 or more than 1 show the followers post else show all
         if following_users != []: # if len(following_users) >= 1:
-            return Event.objects.filter(Q(author_id__in=following_users)|
+            return Track.objects.filter(Q(author_id__in=following_users)|
             Q(author=self.request.user)).distinct()
-        return Event.objects.all()
+        return Track.objects.all()
     
     def perform_create(self,serializer):
-        return serializer.save(author=self.request.user)
-    
-class EventDetailAPI(generics.RetrieveDestroyAPIView):
+        return serializer.save(user=self.request.user)
+
+
+    @action(detail=False, methods=["GET"], name="access")
+    def access(self, request, *args, **kwargs):
+        path = request.headers["X-Original-URI"]
+        path = path.replace("/api/media/", "")
+        af = Track.objects.filter(file=path, user=request.user).first()
+        if af:
+            return HttpResponse("Access Granted")
+        else:
+            return HttpResponse(status=403)
+
+class TrackDetailAPI(generics.RetrieveDestroyAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = (IsAuthenticated, IsOwnerOrReadOnly,)
-    queryset = Event.objects.all()
-    serializer_class = EventDetailSerializer
+    queryset = Track.objects.all()
+    serializer_class = TrackDetailSerializer
 
-class EventUpdateDeleteView(generics.RetrieveAPIView,mixins.UpdateModelMixin,mixins.DestroyModelMixin):
+class TrackUpdateDeleteView(generics.RetrieveAPIView,mixins.UpdateModelMixin,mixins.DestroyModelMixin):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    serializer_class = EventSerializer
+    serializer_class = TrackSerializer
 
     def get_queryset(self):
-        return Event.objects.filter(author=self.request.user)
+        return Track.objects.filter(user=self.request.user)
     
     def patch(self,request,*args,**kwargs):
         return self.partial_update(request,*args,**kwargs)
@@ -58,66 +70,67 @@ class EventUpdateDeleteView(generics.RetrieveAPIView,mixins.UpdateModelMixin,mix
 
 # comments views
 
-class CommentCreateAPI(generics.CreateAPIView):
+class TrackCommentCreateAPI(generics.CreateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    model = Comment
-    serializer_class = CommentSerializer
+    model = TrackComment
+    serializer_class = TrackCommentSerializer
 
     def perform_create(self,serializer):
         return serializer.save(author=self.request.user)
 
-class CommentDelete(generics.RetrieveDestroyAPIView):
+class TrackCommentDelete(generics.RetrieveDestroyAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    model = Comment
-    serializer_class = CommentSerializer
+    model = TrackComment
+    serializer_class = TrackCommentSerializer
 
     def get_queryset(self):
-        return Comment.objects.filter(author=self.request.user)
+        return TrackComment.objects.filter(author=self.request.user)
 
     def delete(self,request,*args,**kwargs):
         instance = self.get_object()
         print(instance)
         self.perform_destroy(instance)
         return response.Response(status=status.HTTP_204_NO_CONTENT)
-
+    
 @api_view(['GET'])
-def EventLikeAPI(request,pk):
+def TrackLikeAPI(request,pk):
     try:
-        event = Event.objects.get(pk=pk) 
-        if request.user in event.likes.all():
-            event.likes.remove(request.user)
+        track = Track.objects.get(pk=pk) 
+        if request.user in track.likes.all():
+            track.likes.remove(request.user)
             return response.Response({"data":"Unliked"})
         else:
-            event.likes.add(request.user)
+            track.likes.add(request.user)
             return response.Response({"data":"Liked"})
-    except Event.DoesNotExist:
+    except Track.DoesNotExist:
         return response.Response(status.HTTP_404_NOT_FOUND)
 
 
 @api_view(['GET'])
-def search(request):
-    event_query = request.GET.get('event',None)
+def search_track(request):
+    track_query = request.GET.get('tracks',None)
     user_query = request.GET.get('user',None)
     User = get_user_model()
-    if event_query and not user_query:
-        queryset = Event.objects.filter(body__icontains=event_query)
+    if track_query and not user_query:
+        queryset = Track.objects.filter(body__icontains=track_query)
         return response.Response({
-            "events":EventSerializer(
+            "tracks":TrackSerializer(
                 queryset,many=True,
             context={'request':request}).data
         })
 
-    if user_query and not event_query:
+    if user_query and not track_query:
         queryset = User.objects.filter(username__icontains=user_query)
         return response.Response({"users":UserSerializer(queryset,many=True).data})
 
-    if event_query and user_query:
-        events = Event.objects.filter(body__icontains=event_query)
+    if track_query and user_query:
+        tracks = Track.objects.filter(body__icontains=track_query)
         users = User.objects.filter(username__icontains=user_query)
         return response.Response({
-            "events":EventSerializer(events,many=True,context={'request':request}).data,
+            "tracks":TrackSerializer(tracks,many=True,context={'request':request}).data,
             "users":UserSerializer(users,many=True).data
         })
     return []
+    
