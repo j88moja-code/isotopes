@@ -1,1 +1,21 @@
-# isotopes
+# Isotopes Music App
+
+This a full stack web application that for Isotopes of Music. Build with Django Restframe and React JS. 
+
+Running
+`docker-compose up --build`
+
+Services:
+
+* Client
+* Server
+* Database
+
+Technologies
+
+* Django
+* Django rest framework
+* MySQL
+* React
+* Material-UI
+* Bootstrap

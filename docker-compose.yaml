@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: ./docker/mysql/Dockerfile
     volumes:
-      - mysql_data:/var/lib/mysql
+      - db_data:/var/lib/mysql
     restart: always
     env_file: venv/.env
     ports:
@@ -50,4 +50,4 @@ services:
       - 8080:8080
 
 volumes:
-  mysql_data:
+  db_data:
