@@ -8,11 +8,11 @@ import {
     InputLabel, FormControl,
     Grid,
     Link, MenuItem,
-    Select,
     TextField,
     Typography
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import Select from '@mui/material/Select';
 import axios from "axios";
 import {useNavigate} from 'react-router-dom';
 
@@ -36,8 +36,8 @@ const Register = (props) => {
     const [first_name, setFirstName] =useState('')
     const [last_name, setLastName] = useState('')
     const [email, setEmail] = useState('');
-    const [role_id, setRoleID] = useState(0);
-    const [roles, setRoles] = useState([])
+    const [roles, setRoles] = useState([]);
+    const [role_id, setRoleID] = useState(props.id);
     const [password, setPassword] = useState('');
     const [confirm_password, setConfirmPassword] = useState('');
     const [redirect, setRedirect] = useState(false);
@@ -45,15 +45,17 @@ const Register = (props) => {
 
     let navigator = useNavigate();
 
-    useEffect(() => {
-        (
-            async () => {
-                const response = await axios.get('roles');
-
-                setRoles(response.data.data);
+    useEffect(() =>{
+        // fetch post
+        const fetchData = async () =>{
+            setLoading(true);
+            let response = await getRoles();
+            if(response) {
+                setRoles(response.data);
+                setLoading(false)
             }
-        )()
-    }, []);
+        }
+        fetchData()},[])
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -72,7 +74,7 @@ const Register = (props) => {
     };
 
     const handleChange = (event) => {
-        setRoleID(parseInt(event.target.value));
+        setRoleID(event.target.value);
     };
 
     if (redirect) {
@@ -132,18 +134,15 @@ const Register = (props) => {
                             />
                         </Grid>
                         <Grid item xs={12} >
-                            <FormControl sx={{ m: 1, width: 300 }}>
+                            <FormControl fullWidth>
                                 <InputLabel id="demo-multiple-name-label">Isotope Type</InputLabel>
                                     <Select
-                                        fullWidth
-                                        multiple
                                         onChange={handleChange}
-                                        input={<OutlinedInput label="Name" />}
                                     >
                                         <MenuItem disabled value="">
                                             <em>Isotope type</em>
                                         </MenuItem>
-                                        {roles.map((role) => (
+                                        {(roles).map((role) => (
                                             <MenuItem
                                                 key={role.id}
                                                 value={role.id}

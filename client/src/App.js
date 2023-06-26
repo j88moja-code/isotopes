@@ -6,7 +6,7 @@ import Register from "./pages/public/Register";
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter forceRefresh>
         <Routes>
             {/* PROTECTED ROUTES  */}
             <Route path="/" element={<Home />} />
