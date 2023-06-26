@@ -5,9 +5,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import axios from 'axios';
-import { Provider as AlertProvider } from 'react-alert';
-import AlertTemplate from "react-alert-template-basic";
-import {UserProvider} from './reducer/UserReducer';
+import {configureStore} from "./redux/configureStore";
+import {Provider} from "react-redux";
 
 const defaultTheme = createTheme();
 
@@ -21,18 +20,16 @@ axios.defaults.baseURL = 'http://localhost:8000/api/';
 axios.defaults.withCredentials = true;
 axios.defaults.headers.Authorization = `Bearer ${localStorage.getItem('token')}`;
 
+const store = configureStore();
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-      <UserProvider>
+      <Provider store={store}>
       <ThemeProvider theme={defaultTheme}/>
       <CssBaseline />
-      <AlertProvider template={AlertTemplate}
-                     {...alertOptions}
-      >
       <App />
-      </AlertProvider>
-      </UserProvider>
+      </Provider>
   </React.StrictMode>
 );
 

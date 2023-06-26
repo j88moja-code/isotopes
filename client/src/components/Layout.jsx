@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import axios from "axios";
 import {useNavigate} from 'react-router-dom';
-import Navbar from "./Navbar";
 
 const Layout = (props) => {
     const [redirect, setRedirect] = useState(false);
@@ -26,7 +25,7 @@ const Layout = (props) => {
 
     return (
         <div>
-            <Navbar />
+            {/* <Navbar /> */}
             {props.children}
         </div>
     );

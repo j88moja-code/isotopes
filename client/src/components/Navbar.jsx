@@ -1,13 +1,20 @@
-import React, {useContext} from 'react';
+import React, {useState, useEffect} from 'react';
 import {Link,useNavigate} from 'react-router-dom';
 
 import Logo from "../assests/logo.png";
-import {userReduce} from '../reducer/UserReducer';
+import {connect} from 'react-redux';
 
-const Navbar = () => {
+import { getUser } from '../redux/actions/setUserAction';
 
-    let {user} = useContext(userReduce);
-    let navigate = useNavigate();
+const Navbar = (props) => {
+
+    const [user, setUser] = useState([]);
+
+    useEffect(() => {
+        (
+           getUser 
+        )();
+    },[])
 
     return (
         <nav className="navbar navbar-expand-lg navbar-light sticky-top" style={{background:"#fff"}}>>
